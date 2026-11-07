@@ -72,9 +72,9 @@ function Index() {
           </p>
 
           <h1 className="font-display text-4xl font-bold leading-tight text-foreground sm:text-5xl">
-            Light up SD College,{" "}
+            This Diwali, Let's Light Up SD College Together!,{" "}
             <span className="text-glow-gold text-primary">
-              one answer at a time
+              One Right Answer = One Glowing Diya in our campus !
             </span>
           </h1>
 
