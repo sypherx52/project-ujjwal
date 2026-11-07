@@ -1,4 +1,3 @@
-
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CampusScene } from "@/components/campus-scene";
 import { useCampusStats } from "@/hooks/use-campus";
@@ -131,8 +130,52 @@ function Index() {
         </div>
       </section>
 
+      {/* SD CodeCraft introduction */}
+      <section className="card-glow mt-6 overflow-hidden rounded-2xl border border-primary/20 bg-card/60">
+        <div className="px-6 pt-8 text-center sm:px-10 sm:pt-10">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-primary">
+            The people behind the celebration
+          </p>
+
+          <h2 className="mt-3 font-display text-3xl font-bold text-foreground sm:text-4xl">
+            Developed by SD CodeCraft
+          </h2>
+
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            Built with creativity, collaboration and a little festive magic
+            by the student developer community of SD College.
+          </p>
+        </div>
+
+        <div className="px-4 py-6 sm:px-8 sm:py-8">
+          <div className="overflow-hidden rounded-xl border border-primary/20 bg-background/50">
+            <img
+  src="/images/sd-codecraft-group.gif.mp4"
+  alt="SD CodeCraft Club team"
+  className="max-h-600px w-full object-cover"
+  loading="lazy"
+/>
+          </div>
+
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            The team behind SDC Ujjwal
+          </p>
+        </div>
+
+        <div className="border-t border-border/60 bg-primary/5 px-6 py-7 text-center sm:py-9">
+          <h2 className="font-display text-2xl font-bold text-primary sm:text-3xl">
+            Happy Diwali from all of us! 🪔
+          </h2>
+
+          <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+            May this festival bring happiness, knowledge and new beginnings
+            to everyone in our college community.
+          </p>
+        </div>
+      </section>
+
       {/* Recent contributions */}
-      <section className="rounded-2xl border border-border bg-card/50 p-6">
+      <section className="mt-10 rounded-2xl border border-border bg-card/50 p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold text-foreground">
             Recently lit diyas
@@ -227,6 +270,17 @@ function Index() {
             <Sparkles className="h-4 w-4" /> Our mission
           </Link>
         </Button>
+      </section>
+            {/* Bottom Diwali GIF */}
+      <section className="mt-12 mb-6">
+        <div className="overflow-hidden rounded-2xl border border-primary/20 bg-card/50">
+          <img
+            src="/images/diwali-bottom.gif"
+            alt="Happy Diwali celebration"
+            className="block w-full h-auto"
+            loading="lazy"
+          />
+        </div>
       </section>
     </main>
   );
