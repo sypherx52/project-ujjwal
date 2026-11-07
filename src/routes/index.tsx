@@ -150,7 +150,7 @@ function Index() {
         <div className="px-4 py-6 sm:px-8 sm:py-8">
           <div className="overflow-hidden rounded-xl border border-primary/20 bg-background/50">
             <img
-  src="/images/sd-codecraft-group.gif.mp4"
+  src="/images/codecraft.gif"
   alt="SD CodeCraft Club team"
   className="max-h-600px w-full object-cover"
   loading="lazy"
@@ -275,7 +275,7 @@ function Index() {
       <section className="mt-12 mb-6">
         <div className="overflow-hidden rounded-2xl border border-primary/20 bg-card/50">
           <img
-            src="/images/diwali-bottom.gif"
+            src="/images/sdc.gif"
             alt="Happy Diwali celebration"
             className="block w-full h-auto"
             loading="lazy"
