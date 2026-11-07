@@ -150,7 +150,7 @@ function Index() {
         <div className="px-4 py-6 sm:px-8 sm:py-8">
           <div className="overflow-hidden rounded-xl border border-primary/20 bg-background/50">
             <img
-  src="/images/codecraft.gif"
+  src="/images/sd-codecraft-group.jpg"
   alt="SD CodeCraft Club team"
   className="max-h-600px w-full object-cover"
   loading="lazy"
