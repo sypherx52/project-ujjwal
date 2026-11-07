@@ -22,7 +22,7 @@ type SceneProps = {
 
 type Position = [number, number];
 
-const MAX_DIYAS_PER_PHOTO = 20;
+const MAX_DIYAS_PER_PHOTO = 25;
 
 const PHOTOS: {
   src: string;
@@ -38,6 +38,7 @@ const PHOTOS: {
       [89, 79], [14, 62], [26, 65], [38, 59],
       [50, 66], [62, 60], [74, 65], [86, 59],
       [20, 43], [40, 46], [60, 43], [80, 46],
+      [5, 52], [95, 52], [30, 28], [50, 25], [70, 28],
     ],
   },
   {
@@ -49,6 +50,7 @@ const PHOTOS: {
       [89, 81], [13, 63], [25, 65], [37, 61],
       [63, 61], [75, 65], [87, 63], [20, 43],
       [35, 46], [65, 46], [80, 43], [50, 72],
+      [5, 52], [95, 52], [30, 28], [50, 25], [70, 28],
     ],
   },
   {
@@ -60,6 +62,7 @@ const PHOTOS: {
       [89, 82], [12, 65], [24, 68], [36, 63],
       [48, 67], [60, 63], [72, 67], [86, 63],
       [20, 45], [40, 48], [60, 45], [80, 48],
+      [5, 52], [95, 52], [30, 28], [50, 25], [70, 28],
     ],
   },
   {
@@ -71,6 +74,7 @@ const PHOTOS: {
       [90, 82], [12, 64], [24, 67], [36, 63],
       [48, 67], [60, 63], [74, 67], [87, 63],
       [20, 44], [40, 47], [60, 44], [80, 47],
+      [5, 52], [95, 52], [30, 28], [50, 25], [70, 28],
     ],
   },
 ];
@@ -100,9 +104,7 @@ function Diya({
     }
   }
 
-  function handlePointerDown(
-    event: PointerEvent<HTMLButtonElement>
-  ) {
+  function handlePointerDown(event: PointerEvent<HTMLButtonElement>) {
     if (event.button !== 0 && event.pointerType === "mouse") {
       return;
     }
@@ -133,9 +135,7 @@ function Diya({
     }, 300);
   }
 
-  function handlePointerMove(
-    event: PointerEvent<HTMLButtonElement>
-  ) {
+  function handlePointerMove(event: PointerEvent<HTMLButtonElement>) {
     if (pointerRef.current !== event.pointerId) return;
     if (!dragging) return;
 
@@ -167,9 +167,7 @@ function Diya({
     onMove(x, y);
   }
 
-  function handlePointerUp(
-    event: PointerEvent<HTMLButtonElement>
-  ) {
+  function handlePointerUp(event: PointerEvent<HTMLButtonElement>) {
     clearLongPress();
 
     if (pointerRef.current === event.pointerId) {
@@ -214,7 +212,6 @@ function Diya({
         WebkitTapHighlightColor: "transparent",
       }}
     >
-      {/* Diya bowl */}
       <span
         className="absolute bottom-1 left-1/2 h-2 w-5 -translate-x-1/2 rounded-full"
         style={{
@@ -223,7 +220,6 @@ function Diya({
         }}
       />
 
-      {/* Flame */}
       <span
         className={`scene-flame absolute bottom-3 left-1/2 ${
           sparkling ? "scene-flame-active" : ""
@@ -239,7 +235,6 @@ function Diya({
         }}
       />
 
-      {/* Glow */}
       <span
         className={`scene-glow absolute -left-1 -top-2 h-10 w-10 ${
           sparkling ? "scene-glow-active" : ""
@@ -253,7 +248,6 @@ function Diya({
         }}
       />
 
-      {/* Sparkle burst */}
       {sparkling && (
         <span className="scene-spark-burst absolute left-1/2 top-1/2 z-30">
           {Array.from({ length: 20 }).map((_, i) => (
@@ -282,9 +276,7 @@ export function CampusScene({
   className = "",
 }: SceneProps) {
   const [activePhoto, setActivePhoto] = useState(0);
-  const [sparklingDiya, setSparklingDiya] = useState<string | null>(
-    null
-  );
+  const [sparklingDiya, setSparklingDiya] = useState<string | null>(null);
 
   const [photoPositions, setPhotoPositions] = useState<
     Record<number, Record<number, Position>>
@@ -300,7 +292,7 @@ export function CampusScene({
     return () => window.clearInterval(timer);
   }, []);
 
-  // End sparkle animation.
+  // End each sparkle animation.
   useEffect(() => {
     if (!sparklingDiya) return;
 
@@ -312,10 +304,9 @@ export function CampusScene({
   }, [sparklingDiya]);
 
   const photo = PHOTOS[activePhoto] ?? PHOTOS[0];
-
   const totalDiyas = Math.max(0, Math.floor(diyas));
 
-  // Every 20 contributions light up the next photograph.
+  // Every 25 contributions light up the next photograph.
   const photoDiyaCounts = PHOTOS.map((_, index) =>
     Math.min(
       Math.max(totalDiyas - index * MAX_DIYAS_PER_PHOTO, 0),
@@ -324,6 +315,18 @@ export function CampusScene({
   );
 
   const visibleDiyas = photoDiyaCounts[activePhoto] ?? 0;
+
+  // Automatically sparkle a random visible diya every 3.5 seconds.
+  useEffect(() => {
+    if (visibleDiyas === 0) return;
+
+    const timer = window.setInterval(() => {
+      const randomIndex = Math.floor(Math.random() * visibleDiyas);
+      setSparklingDiya(`${activePhoto}-${randomIndex}`);
+    }, 3500);
+
+    return () => window.clearInterval(timer);
+  }, [activePhoto, visibleDiyas]);
 
   const progress = Math.min(
     1,
@@ -340,7 +343,6 @@ export function CampusScene({
       className={`relative isolate overflow-hidden rounded-3xl border border-primary/30 bg-black shadow-2xl ${className}`}
       data-testid="campus-scene"
     >
-      {/* Four-photo slideshow */}
       {PHOTOS.map((item, index) => (
         <img
           key={item.name}
@@ -354,7 +356,6 @@ export function CampusScene({
         />
       ))}
 
-      {/* Cinematic gradient */}
       <div
         className="absolute inset-0"
         style={{
@@ -364,7 +365,6 @@ export function CampusScene({
         }}
       />
 
-      {/* Golden illumination */}
       <div
         className="pointer-events-none absolute inset-0 transition-opacity duration-1000"
         style={{
@@ -374,10 +374,8 @@ export function CampusScene({
         }}
       />
 
-      {/* Diyas for the active photograph */}
       {photo.positions.slice(0, visibleDiyas).map((position, index) => {
         const id = `${activePhoto}-${index}`;
-
         const [x, y] =
           photoPositions[activePhoto]?.[index] ?? position;
 
@@ -410,7 +408,6 @@ export function CampusScene({
         );
       })}
 
-      {/* Festive stars */}
       {level >= 2 &&
         Array.from({ length: Math.min(level * 3, 15) }).map(
           (_, index) => (
@@ -430,7 +427,6 @@ export function CampusScene({
           )
         )}
 
-      {/* Fireworks at higher milestones */}
       {level >= 5 && (
         <div className="pointer-events-none absolute inset-0 z-10">
           {Array.from({ length: 8 }).map((_, index) => (
@@ -451,7 +447,6 @@ export function CampusScene({
         </div>
       )}
 
-      {/* Bottom information panel */}
       <div className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-between gap-3 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-4 pb-5 pt-16">
         <div className="min-w-0">
           <p className="font-display text-sm font-semibold text-amber-100 sm:text-lg">
@@ -482,7 +477,6 @@ export function CampusScene({
         </div>
       </div>
 
-      {/* Slideshow selectors */}
       <div className="absolute right-4 top-4 z-20 flex gap-2">
         {PHOTOS.map((item, index) => (
           <button

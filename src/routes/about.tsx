@@ -1,21 +1,27 @@
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Code2, Flame, GraduationCap, Heart, Sparkles } from "lucide-react";
+import {
+  Code2,
+  Flame,
+  GraduationCap,
+  Heart,
+  Sparkles,
+} from "lucide-react";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About — Project Ujjwal" },
+      { title: "About — SDC Ujjwal" },
       {
         name: "description",
         content:
-          "Project Ujjwal is a Diwali celebration by the SD CodeCraft Club of Sanatan Dharma College, Ambala Cantt. — one shared campus, lit by every correct answer.",
+          "SDC Ujjwal is a Diwali celebration developed by SD CodeCraft Club of Sanatan Dharma College, Ambala Cantt.",
       },
-      { property: "og:title", content: "About — Project Ujjwal" },
+      { property: "og:title", content: "About — SDC Ujjwal" },
       {
         property: "og:description",
-        content:
-          "A Diwali celebration by the SD CodeCraft Club of Sanatan Dharma College, Ambala Cantt.",
+        content: "Happy Diwali from SD CodeCraft Club!",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -26,21 +32,63 @@ export const Route = createFileRoute("/about")({
 
 function AboutPage() {
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-12">
+    <main className="mx-auto w-full max-w-5xl px-4 py-12">
       <div className="text-center">
         <Sparkles className="mx-auto mb-3 h-10 w-10 text-primary" />
-        <h1 className="font-display text-3xl font-bold text-foreground sm:text-4xl">
-          About Project Ujjwal
+        <p className="mb-2 text-sm font-semibold uppercase tracking-[0.25em] text-primary">
+          A celebration of light and togetherness
+        </p>
+        <h1 className="font-display text-3xl font-bold text-foreground sm:text-5xl">
+          About SDC Ujjwal
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-          “Ujjwal” means bright — and that is the whole idea. This Diwali, our
-          college lights itself up one correct answer at a time.
+          Ujjwal means bright — and that is the whole idea. This Diwali,
+          our college lights itself up one correct answer at a time.
         </p>
       </div>
 
       <div className="divider-gold mx-auto my-10 w-56" />
 
-      <section className="card-glow rounded-2xl border border-border bg-card/60 p-6 sm:p-8">
+      <section className="card-glow overflow-hidden rounded-2xl border border-border bg-card/60">
+        <div className="p-6 text-center sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+            Developed by
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-bold text-foreground sm:text-3xl">
+            SD CodeCraft
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            Built with creativity, collaboration and a little festive magic
+            by the student developer community of SD College.
+          </p>
+        </div>
+
+        <div className="px-4 pb-4 sm:px-8 sm:pb-8">
+          <div className="overflow-hidden rounded-xl border border-primary/20 bg-background/50">
+            <img
+              src="/images/sd-codecraft-group.jpg"
+              alt="SD CodeCraft Club team"
+              className="aspect-[16/9] w-full object-cover"
+              loading="lazy"
+            />
+          </div>
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            The people behind SDC Ujjwal
+          </p>
+        </div>
+
+        <div className="border-t border-border/60 bg-primary/5 px-6 py-6 text-center sm:py-8">
+          <h2 className="font-display text-2xl font-bold text-primary sm:text-3xl">
+            Happy Diwali from all of us! 🪔
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+            May this festival bring happiness, knowledge and new beginnings
+            to everyone in our college community.
+          </p>
+        </div>
+      </section>
+
+      <section className="card-glow mt-6 rounded-2xl border border-border bg-card/60 p-6 sm:p-8">
         <div className="flex items-start gap-4">
           <GraduationCap className="mt-1 h-8 w-8 shrink-0 text-primary" />
           <div>
@@ -48,11 +96,9 @@ function AboutPage() {
               Sanatan Dharma College, Ambala Cantt.
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              For decades our campus has celebrated Diwali together — diyas on
-              every windowsill, rangoli in the courtyard, sweets in the staff
-              room. Project Ujjwal carries that tradition online: a shared
-              virtual campus that belongs to every student, teacher and alum of
-              SD College, and that no single person can light alone.
+              This shared virtual campus belongs to every student, teacher
+              and alumnus of SD College. It brings our Diwali celebration
+              online, where everyone can contribute a little light.
             </p>
           </div>
         </div>
@@ -66,11 +112,10 @@ function AboutPage() {
               Built by the SD CodeCraft Club
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Designed and developed by the student coding club of SD College.
-              The quiz questions, the campus artwork and the illumination levels
-              were all crafted as a club project for Diwali 2026 — proof that a
-              small group of students can build something the whole college
-              plays with, together, across every device.
+              Designed and developed by students, for our college community.
+              From the quiz to the shared campus illumination, this project
+              celebrates what students can create when they learn and build
+              together.
             </p>
           </div>
         </div>
@@ -84,12 +129,10 @@ function AboutPage() {
               How the light works
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              The campus starts in warm twilight — beautiful, but waiting. Every
-              correct quiz answer from anyone, anywhere, lights one diya on the
-              shared scene. At 10 diyas the gate awakens; at 25 the pathways
-              glow; at 50 the courtyard comes alive; at 75 the gardens shimmer;
-              and at 100 the whole college reaches Grand Illumination, with
-              fireworks over the skyline.
+              Every correct quiz answer lights one diya on the shared campus.
+              Every 25 contributions fill another campus photograph. As the
+              total grows, the campus becomes brighter and reaches new
+              illumination milestones.
             </p>
           </div>
         </div>
@@ -103,9 +146,8 @@ function AboutPage() {
               Our mission
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Knowledge is the brightest diya of all. We want every student to
-              feel that learning — like Diwali — is better when shared. No
-              sign-up walls, no fees, no competition that leaves anyone out:
+              Knowledge is the brightest diya of all. We believe learning,
+              like Diwali, is better when shared. No fees, no barriers —
               just a college lighting up together, one answer at a time.
             </p>
           </div>

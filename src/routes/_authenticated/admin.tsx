@@ -1,3 +1,4 @@
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,17 +11,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Shield, Trash2 } from "lucide-react";
+import { Plus, Shield, Trash2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { timeAgo } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Admin Dashboard — Project Ujjwal" },
-      { name: "description", content: "Manage questions, milestone and participants." },
-      { property: "og:title", content: "Admin Dashboard — Project Ujjwal" },
-      { property: "og:description", content: "Club admin tools for the festival site." },
+      { title: "Admin Dashboard — SDC Ujjwal" },
+      {
+        name: "description",
+        content: "Manage questions, milestone and participants.",
+      },
+      { property: "og:title", content: "Admin Dashboard — SDC Ujjwal" },
+      {
+        property: "og:description",
+        content: "SD CodeCraft Club admin tools for SDC Ujjwal.",
+      },
       { property: "og:type", content: "website" },
     ],
   }),
@@ -51,47 +58,80 @@ function AdminPage() {
   const [milestone, setMilestone] = useState("");
   const [form, setForm] = useState(EMPTY_FORM);
   const [busy, setBusy] = useState(false);
-  const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [renaming, setRenaming] = useState<{
+    id: string;
+    value: string;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
+
     try {
       const [q, p, s] = await Promise.all([
-        supabase.from("quiz_questions").select("*").order("created_at", { ascending: false }),
-        supabase.from("participants").select("*").order("created_at", { ascending: false }).limit(30),
-        supabase.from("campus_settings").select("*").eq("id", 1).single(),
+        supabase
+          .from("quiz_questions")
+          .select("*")
+          .order("created_at", { ascending: false }),
+
+        supabase
+          .from("participants")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(30),
+
+        supabase
+          .from("campus_settings")
+          .select("*")
+          .eq("id", 1)
+          .single(),
       ]);
+
       if (q.error) throw q.error;
       if (p.error) throw p.error;
       if (s.error) throw s.error;
+
       setQuestions(q.data ?? []);
       setParticipants(p.data ?? []);
       setMilestone(String(s.data?.milestone_diyas ?? 100));
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "Could not load admin data");
+      setLoadError(
+        err instanceof Error ? err.message : "Could not load admin data",
+      );
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (ready && isAdmin) void load();
+    if (ready && isAdmin) {
+      void load();
+    }
   }, [ready, isAdmin, load]);
 
   if (!ready) {
-    return <main className="mx-auto max-w-4xl px-4 py-16 text-muted-foreground">Checking your access…</main>;
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16 text-muted-foreground">
+        Checking your access…
+      </main>
+    );
   }
 
   if (!isAdmin) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-16 text-center">
         <Shield className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-        <h1 className="font-display text-2xl font-bold text-foreground">Admin access only</h1>
+
+        <h1 className="font-display text-2xl font-bold text-foreground">
+          Admin access only
+        </h1>
+
         <p className="mt-2 text-sm text-muted-foreground">
           This area is for SD CodeCraft Club admins. Ask a club admin to grant
           your account the admin role.
         </p>
+
         <Button asChild variant="outline" className="mt-6">
           <Link to="/">Back to the celebration</Link>
         </Button>
@@ -101,18 +141,24 @@ function AdminPage() {
 
   const saveMilestone = async () => {
     const value = Number(milestone);
+
     if (!Number.isFinite(value) || value < 1) {
       toast.error("Milestone must be a positive number");
       return;
     }
+
     setBusy(true);
+
     const { error } = await supabase
       .from("campus_settings")
       .update({ milestone_diyas: Math.floor(value) })
       .eq("id", 1);
+
     setBusy(false);
-    if (error) toast.error(error.message);
-    else {
+
+    if (error) {
+      toast.error(error.message);
+    } else {
       toast.success(`Grand goal is now ${Math.floor(value)} diyas`);
       void stats.refetch();
     }
@@ -120,15 +166,19 @@ function AdminPage() {
 
   const addQuestion = async () => {
     const options = form.options.map((o) => o.trim()).filter(Boolean);
+
     if (!form.question_text.trim() || options.length < 2) {
       toast.error("A question needs text and at least two options");
       return;
     }
+
     if (form.correct_index >= options.length) {
       toast.error("Pick a correct option that exists");
       return;
     }
+
     setBusy(true);
+
     const { error } = await supabase.from("quiz_questions").insert({
       question_text: form.question_text.trim(),
       options,
@@ -136,14 +186,18 @@ function AdminPage() {
       category: form.category.trim() || "Diwali",
       difficulty: form.difficulty,
       hint: form.hint.trim(),
-      explanation: form.explanation.trim() || "Correct answer highlighted above.",
+      explanation:
+        form.explanation.trim() || "Correct answer highlighted above.",
       is_active: true,
     });
+
     setBusy(false);
+
     if (error) {
       toast.error(error.message);
       return;
     }
+
     toast.success("Question added to the quiz");
     setForm(EMPTY_FORM);
     void load();
@@ -154,59 +208,148 @@ function AdminPage() {
       .from("quiz_questions")
       .update({ is_active: !q.is_active })
       .eq("id", q.id);
-    if (error) toast.error(error.message);
-    else void load();
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      void load();
+    }
   };
 
   const deleteQuestion = async (q: QuestionRow) => {
-    if (!window.confirm(`Delete “${q.question_text.slice(0, 60)}”?`)) return;
-    const { error } = await supabase.from("quiz_questions").delete().eq("id", q.id);
+    if (!window.confirm(`Delete "${q.question_text.slice(0, 60)}"?`)) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from("quiz_questions")
+      .delete()
+      .eq("id", q.id);
+
     if (error) {
       toast.error(
         "This question already has answers, so it cannot be deleted — switch it off instead.",
       );
       return;
     }
+
     toast.success("Question deleted");
     void load();
   };
 
   const saveRename = async () => {
     if (!renaming) return;
+
     const clean = renaming.value.trim().replace(/[<>]/g, "").slice(0, 40);
+
     if (!clean) return;
+
     setBusy(true);
+
     const { error } = await supabase
       .from("participants")
       .update({ display_name: clean })
       .eq("id", renaming.id);
+
     setBusy(false);
     setRenaming(null);
-    if (error) toast.error(error.message);
-    else {
+
+    if (error) {
+      toast.error(error.message);
+    } else {
       toast.success("Name updated");
       void load();
     }
   };
 
+  // Complete event test-data reset.
+  // This calls a protected PostgreSQL RPC, not direct table deletes.
+  const resetTestData = async () => {
+    const confirmed = window.confirm(
+      "FINAL RESET WARNING\n\n" +
+        "This will permanently delete:\n" +
+        "• All quiz answers\n" +
+        "• All quiz attempts\n" +
+        "• All diya contributions and leaderboard scores\n\n" +
+        "The following will be preserved:\n" +
+        "• All participant registrations\n" +
+        "• All 20 Diwali quiz questions\n" +
+        "• Campus settings and milestone\n\n" +
+        "This action cannot be undone.\n\n" +
+        "Are you sure you want to continue?",
+    );
+
+    if (!confirmed) return;
+
+    setResetting(true);
+
+    try {
+      const { data, error } = await (supabase as any).rpc(
+        "reset_quiz_data",
+      );
+
+      if (error) throw error;
+
+      const result = data as {
+        success?: boolean;
+        deleted_answers?: number;
+        deleted_attempts?: number;
+        deleted_diya_contributions?: number;
+      };
+
+      if (!result?.success) {
+        throw new Error("The reset did not return a success confirmation.");
+      }
+
+      toast.success(
+        `Reset complete! ${result.deleted_answers ?? 0} answers, ` +
+          `${result.deleted_attempts ?? 0} attempts and ` +
+          `${result.deleted_diya_contributions ?? 0} diya contributions deleted.`,
+      );
+
+      await Promise.all([stats.refetch(), load()]);
+    } catch (err) {
+  console.error("RESET QUIZ DATA ERROR:", err);
+
+  const message =
+    err && typeof err === "object" && "message" in err
+      ? String(err.message)
+      : String(err);
+
+  toast.error(message);
+}finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10">
+      {/* Header */}
       <div className="mb-8 flex items-center gap-3">
         <Shield className="h-8 w-8 text-primary" />
+
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
             Admin Dashboard
           </h1>
+
           <p className="text-sm text-muted-foreground">
-            SD CodeCraft Club controls for the Ujjwal festival.
+            SD CodeCraft Club controls for SDC Ujjwal.
           </p>
         </div>
       </div>
 
+      {/* Load error */}
       {loadError ? (
         <div className="card-glow rounded-2xl border border-destructive/40 bg-card p-8 text-center">
           <p className="text-destructive">{loadError}</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => void load()}>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            onClick={() => void load()}
+          >
             Retry
           </Button>
         </div>
@@ -215,24 +358,89 @@ function AdminPage() {
       {/* Stats */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { value: stats.data?.total_diyas ?? "—", label: "Diyas lit" },
-          { value: stats.data?.participants_total ?? "—", label: "Participants" },
-          { value: stats.data?.correct_answers ?? "—", label: "Correct answers" },
-          { value: questions.length, label: "Questions (all)" },
+          {
+            value: stats.data?.total_diyas ?? "—",
+            label: "Diyas lit",
+          },
+          {
+            value: stats.data?.participants_total ?? "—",
+            label: "Participants",
+          },
+          {
+            value: stats.data?.correct_answers ?? "—",
+            label: "Correct answers",
+          },
+          {
+            value: questions.length,
+            label: "Questions (all)",
+          },
         ].map((tile) => (
-          <div key={tile.label} className="rounded-xl border border-border bg-card/70 px-4 py-3 text-center">
-            <p className="font-display text-2xl font-bold text-primary">{tile.value}</p>
+          <div
+            key={tile.label}
+            className="rounded-xl border border-border bg-card/70 px-4 py-3 text-center"
+          >
+            <p className="font-display text-2xl font-bold text-primary">
+              {tile.value}
+            </p>
+
             <p className="text-xs text-muted-foreground">{tile.label}</p>
           </div>
         ))}
       </section>
 
+      {/* Complete event reset */}
+      <section className="mt-8 rounded-2xl border border-destructive/40 bg-destructive/5 p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 text-destructive" />
+
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                Reset event test data
+              </h2>
+            </div>
+
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Clear all quiz answers, attempts, diya contributions and
+              leaderboard scores before the actual event. Participant
+              registrations, all 20 quiz questions and campus settings will
+              remain untouched.
+            </p>
+
+            <p className="mt-2 text-xs font-medium text-destructive">
+              Warning: This action is permanent and cannot be undone.
+            </p>
+          </div>
+
+          <Button
+            variant="destructive"
+            onClick={() => void resetTestData()}
+            disabled={resetting || busy}
+            className="shrink-0 gap-2"
+          >
+            {resetting ? (
+              <RotateCcw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+
+            {resetting ? "Resetting..." : "Reset test data"}
+          </Button>
+        </div>
+      </section>
+
       {/* Milestone */}
       <section className="card-glow mt-8 rounded-2xl border border-border bg-card/60 p-6">
-        <h2 className="font-display text-lg font-semibold text-foreground">Grand goal (milestone)</h2>
+        <h2 className="font-display text-lg font-semibold text-foreground">
+          Grand goal (milestone)
+        </h2>
+
         <div className="mt-3 flex max-w-md items-end gap-3">
           <div className="flex-1 space-y-2">
-            <Label htmlFor="milestone">Diyas needed for Grand Illumination</Label>
+            <Label htmlFor="milestone">
+              Diyas needed for Grand Illumination
+            </Label>
+
             <Input
               id="milestone"
               type="number"
@@ -241,7 +449,8 @@ function AdminPage() {
               onChange={(e) => setMilestone(e.target.value)}
             />
           </div>
-          <Button onClick={saveMilestone} disabled={busy}>
+
+          <Button onClick={saveMilestone} disabled={busy || resetting}>
             Save
           </Button>
         </div>
@@ -249,18 +458,25 @@ function AdminPage() {
 
       {/* Add question */}
       <section className="card-glow mt-8 rounded-2xl border border-border bg-card/60 p-6">
-        <h2 className="font-display text-lg font-semibold text-foreground">Add a question</h2>
+        <h2 className="font-display text-lg font-semibold text-foreground">
+          Add a question
+        </h2>
+
         <div className="mt-4 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="q-text">Question</Label>
+
             <Textarea
               id="q-text"
               rows={2}
               value={form.question_text}
-              onChange={(e) => setForm({ ...form, question_text: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, question_text: e.target.value })
+              }
               placeholder="Which festival is known as the Festival of Lights?"
             />
           </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             {form.options.map((option, i) => (
               <div key={i} className="flex items-center gap-2">
@@ -268,10 +484,13 @@ function AdminPage() {
                   type="radio"
                   name="correct-option"
                   checked={form.correct_index === i}
-                  onChange={() => setForm({ ...form, correct_index: i })}
+                  onChange={() =>
+                    setForm({ ...form, correct_index: i })
+                  }
                   aria-label={`Mark option ${i + 1} correct`}
                   className="accent-[--color-primary]"
                 />
+
                 <Input
                   value={option}
                   onChange={(e) => {
@@ -279,26 +498,36 @@ function AdminPage() {
                     options[i] = e.target.value;
                     setForm({ ...form, options });
                   }}
-                  placeholder={`Option ${String.fromCharCode(65 + i)}${i === 0 ? " (radio marks the correct one)" : ""}`}
+                  placeholder={`Option ${String.fromCharCode(65 + i)}${
+                    i === 0 ? " (radio marks the correct one)" : ""
+                  }`}
                 />
               </div>
             ))}
           </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="q-category">Category</Label>
+
               <Input
                 id="q-category"
                 value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, category: e.target.value })
+                }
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="q-difficulty">Difficulty</Label>
+
               <select
                 id="q-difficulty"
                 value={form.difficulty}
-                onChange={(e) => setForm({ ...form, difficulty: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, difficulty: e.target.value })
+                }
                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
               >
                 <option value="easy">Easy</option>
@@ -307,26 +536,40 @@ function AdminPage() {
               </select>
             </div>
           </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="q-hint">Hint</Label>
+
               <Input
                 id="q-hint"
                 value={form.hint}
-                onChange={(e) => setForm({ ...form, hint: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, hint: e.target.value })
+                }
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="q-explanation">Explanation</Label>
+
               <Input
                 id="q-explanation"
                 value={form.explanation}
-                onChange={(e) => setForm({ ...form, explanation: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, explanation: e.target.value })
+                }
               />
             </div>
           </div>
-          <Button onClick={addQuestion} disabled={busy} className="gap-2">
-            <Plus className="h-4 w-4" /> Add question
+
+          <Button
+            onClick={addQuestion}
+            disabled={busy || resetting}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add question
           </Button>
         </div>
       </section>
@@ -336,14 +579,18 @@ function AdminPage() {
         <h2 className="font-display text-lg font-semibold text-foreground">
           Question bank ({questions.length})
         </h2>
+
         {loading ? (
-          <p className="mt-4 text-sm text-muted-foreground">Loading questions…</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Loading questions…
+          </p>
         ) : questions.length === 0 ? (
-          <p className="mt-4 text-sm text-muted-foreground">No questions yet — add the first one above.</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            No questions yet — add the first one above.
+          </p>
         ) : (
           <ul className="mt-4 space-y-2">
             {questions.map((q) => {
-              const options = Array.isArray(q.options) ? (q.options as string[]) : [];
               return (
                 <li
                   key={q.id}
@@ -352,16 +599,28 @@ function AdminPage() {
                   <span className="min-w-0 flex-1 truncate text-sm text-foreground">
                     {q.question_text}
                   </span>
+
                   <Badge variant="outline" className="capitalize">
                     {q.category}
                   </Badge>
+
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">
                       {q.is_active ? "Active" : "Off"}
                     </span>
-                    <Switch checked={q.is_active} onCheckedChange={() => void toggleActive(q)} />
+
+                    <Switch
+                      checked={q.is_active}
+                      onCheckedChange={() => void toggleActive(q)}
+                    />
                   </div>
-                  <Button variant="ghost" size="icon" aria-label="Delete question" onClick={() => void deleteQuestion(q)}>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Delete question"
+                    onClick={() => void deleteQuestion(q)}
+                  >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </li>
@@ -369,9 +628,10 @@ function AdminPage() {
             })}
           </ul>
         )}
+
         <p className="mt-3 text-xs text-muted-foreground">
-          Only active questions appear in the quiz. Questions that already have
-          answers cannot be deleted — switch them off instead.
+          Only active questions appear in the quiz. Questions that already
+          have answers cannot be deleted — switch them off instead.
         </p>
       </section>
 
@@ -380,8 +640,11 @@ function AdminPage() {
         <h2 className="font-display text-lg font-semibold text-foreground">
           Recent participants ({participants.length})
         </h2>
+
         {participants.length === 0 ? (
-          <p className="mt-4 text-sm text-muted-foreground">No participants yet.</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            No participants yet.
+          </p>
         ) : (
           <ul className="mt-4 space-y-2">
             {participants.map((p) => (
@@ -393,13 +656,28 @@ function AdminPage() {
                   <>
                     <Input
                       value={renaming.value}
-                      onChange={(e) => setRenaming({ id: p.id, value: e.target.value })}
+                      onChange={(e) =>
+                        setRenaming({
+                          id: p.id,
+                          value: e.target.value,
+                        })
+                      }
                       className="max-w-xs"
                     />
-                    <Button size="sm" onClick={saveRename} disabled={busy}>
+
+                    <Button
+                      size="sm"
+                      onClick={saveRename}
+                      disabled={busy || resetting}
+                    >
                       Save
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setRenaming(null)}>
+
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setRenaming(null)}
+                    >
                       Cancel
                     </Button>
                   </>
@@ -408,14 +686,24 @@ function AdminPage() {
                     <span className="min-w-0 flex-1 truncate text-sm text-foreground">
                       {p.display_name}
                     </span>
+
                     <Badge variant="outline" className="capitalize">
                       {p.role}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">{timeAgo(p.created_at)}</span>
+
+                    <span className="text-xs text-muted-foreground">
+                      {timeAgo(p.created_at)}
+                    </span>
+
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setRenaming({ id: p.id, value: p.display_name })}
+                      onClick={() =>
+                        setRenaming({
+                          id: p.id,
+                          value: p.display_name,
+                        })
+                      }
                     >
                       Rename
                     </Button>
@@ -425,8 +713,10 @@ function AdminPage() {
             ))}
           </ul>
         )}
+
         <p className="mt-3 text-xs text-muted-foreground">
-          Moderation: rename any participant whose name breaks the festive spirit.
+          Moderation: rename any participant whose name breaks the festive
+          spirit.
         </p>
       </section>
     </main>

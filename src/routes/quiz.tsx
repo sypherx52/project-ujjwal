@@ -1,25 +1,32 @@
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState , useEffect} from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { JoinCard } from "@/components/join-card";
 import { useParticipant } from "@/hooks/use-participant";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Lightbulb, ArrowRight, PartyPopper, Sparkles } from "lucide-react";
+import {
+  Flame,
+  Lightbulb,
+  ArrowRight,
+  PartyPopper,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/quiz")({
   head: () => ({
     meta: [
-      { title: "Quiz Arena — Project Ujjwal" },
+      { title: "Quiz Arena — SDC Ujjwal" },
       {
         name: "description",
         content:
           "Answer Diwali questions about SD College, India and the festival of lights. Every correct answer lights one diya on the shared campus.",
       },
-      { property: "og:title", content: "Quiz Arena — Project Ujjwal" },
+      { property: "og:title", content: "Quiz Arena — SDC Ujjwal" },
       {
         property: "og:description",
         content: "Every correct answer lights one diya on our shared campus.",
@@ -58,54 +65,71 @@ function QuizPage() {
   const [showHint, setShowHint] = useState(false);
 
   const questionQuery = useQuery<Question | null>({
-    queryKey: ["quiz-question", participant?.id, participant?.answered.length ?? 0],
+    queryKey: [
+      "quiz-question",
+      participant?.id,
+      participant?.answered.length ?? 0,
+    ],
     enabled: !!participant,
     staleTime: Infinity,
     queryFn: async () => {
       if (!participant) return null;
+
       const { data, error } = await supabase.rpc("get_next_question", {
         p_exclude: participant.answered,
       });
+
       if (error) throw error;
       return (data as Question | null) ?? null;
     },
   });
 
   const question = questionQuery.data ?? null;
+
   useEffect(() => {
-  setSelected(null);
-  setResult(null);
-  setShowHint(false);
-}, [question?.id]);
+    setSelected(null);
+    setResult(null);
+    setShowHint(false);
+  }, [question?.id]);
 
   const answer = async (index: number) => {
     if (!participant || !question || result || busy) return;
+
     setBusy(true);
     setSelected(index);
+
     try {
       const { data, error } = await supabase.rpc("submit_quiz_answer", {
         p_participant_id: participant.id,
         p_question_id: question.id,
         p_selected_index: index,
       });
+
       if (error) throw new Error(error.message);
+
       const r = data as AnswerResult;
+
       if (r.status === "error") {
         toast.error(r.message ?? "Something went wrong");
         setSelected(null);
         return;
       }
+
       setResult(r);
       markAnswered(question.id);
+
       queryClient.invalidateQueries({ queryKey: ["campus-stats"] });
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+
       if (r.status === "lit") {
-        toast.success("Diya lit! The campus glows a little brighter 🪔");
+        toast.success("Happy Diwali! You've lit a diya on your campus! 🪔");
       } else if (r.status === "already_lit") {
         toast("You already lit this diya — pick the next one!");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not submit answer");
+      toast.error(
+        err instanceof Error ? err.message : "Could not submit answer"
+      );
       setSelected(null);
     } finally {
       setBusy(false);
@@ -127,7 +151,8 @@ function QuizPage() {
             Quiz Arena
           </h1>
           <p className="mt-2 text-muted-foreground">
-            One question at a time. One diya per correct answer. All for one campus.
+            One question at a time. One diya per correct answer. All for one
+            campus.
           </p>
         </div>
         <JoinCard />
@@ -148,6 +173,7 @@ function QuizPage() {
             Playing as {participant.role} · {totalAnswered} questions attempted
           </p>
         </div>
+
         <div className="flex gap-2">
           <Button asChild variant="outline" size="sm">
             <Link to="/campus">See campus</Link>
@@ -164,7 +190,9 @@ function QuizPage() {
         </div>
       ) : questionQuery.isError ? (
         <div className="card-glow rounded-2xl border border-destructive/40 bg-card p-8 text-center">
-          <p className="text-destructive">Could not load a question. Please retry.</p>
+          <p className="text-destructive">
+            Could not load a question. Please retry.
+          </p>
           <Button
             variant="outline"
             size="sm"
@@ -181,8 +209,8 @@ function QuizPage() {
             You've lit up the whole question bank!
           </h2>
           <p className="mt-2 text-muted-foreground">
-            You attempted all {totalAnswered} questions. Every diya you earned is
-            glowing on the shared campus right now.
+            You attempted all {totalAnswered} questions. Every diya you earned
+            is glowing on the shared campus right now.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button asChild className="gap-2">
@@ -191,9 +219,7 @@ function QuizPage() {
               </Link>
             </Button>
             <Button asChild variant="outline" className="gap-2">
-              <Link to="/leaderboard">
-                Check the leaderboard
-              </Link>
+              <Link to="/leaderboard">Check the leaderboard</Link>
             </Button>
           </div>
         </div>
@@ -217,6 +243,7 @@ function QuizPage() {
               const isSelected = selected === index;
               const isCorrect = result && result.correct_index === index;
               const isWrongPick = result && isSelected && !isCorrect;
+
               return (
                 <button
                   key={index}
@@ -247,7 +274,8 @@ function QuizPage() {
             <div className="mt-5 flex items-center justify-between">
               {showHint ? (
                 <p className="flex items-center gap-2 text-sm text-champagne">
-                  <Lightbulb className="h-4 w-4 shrink-0" /> {question.hint}
+                  <Lightbulb className="h-4 w-4 shrink-0" />
+                  {question.hint}
                 </p>
               ) : (
                 <Button
@@ -270,19 +298,30 @@ function QuizPage() {
             >
               <p className="font-semibold text-foreground">
                 {result.status === "lit"
-                  ? "🪔 Correct — one diya lit on the campus!"
+                  ? "🎉 Happy Diwali! You've lit a diya on your campus! 🪔"
                   : result.status === "already_lit"
                     ? "Correct — you'd already lit this diya earlier."
                     : "Almost! The right answer is highlighted above."}
               </p>
+
               <p className="mt-1 text-sm text-muted-foreground">
                 {result.explanation}
               </p>
+
+              {result.status === "lit" && (
+                <p className="mt-2 text-sm leading-relaxed text-amber-200">
+                  Your diya is now part of our shared campus celebration.
+                  Watch the campus photos as the lights grow — every
+                  contribution adds to the glow of SD College!
+                </p>
+              )}
+
               {typeof result.total_diyas === "number" ? (
                 <p className="mt-2 text-sm text-champagne">
                   Campus total: {result.total_diyas} / {result.milestone} diyas
                 </p>
               ) : null}
+
               <Button className="mt-4 gap-2" onClick={nextQuestion}>
                 Next question <ArrowRight className="h-4 w-4" />
               </Button>
@@ -296,8 +335,9 @@ function QuizPage() {
             </div>
             <Progress value={Math.min(100, totalAnswered * 3)} />
             <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Flame className="h-3 w-3 text-ember" /> Each correct answer lights
-              one unique diya — no repeats, no double-counting.
+              <Flame className="h-3 w-3 text-ember" />
+              Each correct answer lights one unique diya — no repeats,
+              no double-counting.
             </p>
           </div>
         </div>

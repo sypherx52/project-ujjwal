@@ -1,6 +1,7 @@
+
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Flame, LogOut, Menu, Shield, Sparkles } from "lucide-react";
+import { LogOut, Menu, Shield, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -19,7 +20,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuthState } from "@/lib/auth-store";
 
-
 export const NAV_LINKS = [
   { to: "/", label: "Home" },
   { to: "/quiz", label: "Quiz" },
@@ -35,11 +35,13 @@ export const NAV_LINKS = [
 function Logo() {
   return (
     <Link to="/" className="flex items-center gap-2">
-      <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 ring-1 ring-primary/40">
-        <Flame className="h-5 w-5 text-primary" />
-      </span>
-      <span className="font-display text-xl font-bold tracking-[0.18em] text-foreground uppercase">
-        Ujjwal
+      <img
+        src="/images/sdc-ujjwal-logo.png"
+        alt="SDC Ujjwal"
+        className="h-10 w-10 rounded-full object-contain"
+      />
+      <span className="font-display text-xl font-bold tracking-[0.12em] text-foreground uppercase">
+        SDC Ujjwal
       </span>
     </Link>
   );
@@ -53,8 +55,8 @@ export function SiteHeader() {
   const email = session?.user?.email ?? "";
 
   const handleSignOut = async () => {
-  navigate({ to: "/", replace: true });
-};
+    navigate({ to: "/", replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
@@ -167,7 +169,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 py-8 text-center">
         <div className="divider-gold w-40" />
         <p className="font-display text-lg font-semibold text-foreground">
-          Project Ujjwal
+          SDC Ujjwal
         </p>
         <p className="max-w-md text-sm text-muted-foreground">
           One campus, one lamp at a time. A Diwali celebration by the SD
@@ -188,13 +190,19 @@ export function PageShell({
   children: ReactNode;
   className?: string;
 }) {
-  return <main className={`mx-auto w-full max-w-6xl px-4 ${className}`}>{children}</main>;
+  return (
+    <main className={`mx-auto w-full max-w-6xl px-4 ${className}`}>
+      {children}
+    </main>
+  );
 }
 
 /** Renders children only after the auth store has hydrated on the client. */
 export function useMountedAuthReady() {
   const { ready } = useAuthState();
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => setMounted(true), []);
+
   return mounted && ready;
 }
