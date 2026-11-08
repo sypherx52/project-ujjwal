@@ -20,21 +20,106 @@ type SceneProps = {
   className?: string;
 };
 
+type GalleryPhotoProps = {
+  photoIndex: number;
+  diyas: number;
+  warmth: number;
+  level: number;
+  className?: string;
+  fit?: "cover" | "contain";
+};
+
 type Position = [number, number];
 
+type BorderBounds = {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+};
+
 const DIYAS_PER_BATCH = 5;
-const MAX_DIYAS_PER_PHOTO = 25;
+export const MAX_DIYAS_PER_PHOTO = 125;
 const TOTAL_PHOTOS = 4;
 
-// Shared position adjustment for homepage and Gallery.
-const POSITION_SHIFT_X = 8;
-const POSITION_SHIFT_Y = -10;
+/**
+ * Creates evenly distributed positions around a rectangle.
+ * The positions are percentages of the photo dimensions.
+ */
+function createRectangularBorder(
+  count: number,
+  bounds: BorderBounds,
+  offset = 0
+): Position[] {
+  const { left, top, right, bottom } = bounds;
 
-function adjustPosition([x, y]: Position): Position {
-  return [
-    Math.max(3, Math.min(97, x + POSITION_SHIFT_X)),
-    Math.max(5, Math.min(90, y + POSITION_SHIFT_Y)),
-  ];
+  const width = right - left;
+  const height = bottom - top;
+  const perimeter = 2 * (width + height);
+
+  return Array.from({ length: count }, (_, index) => {
+    let distance =
+      (((index + offset) / count) * perimeter) % perimeter;
+
+    // Top edge
+    if (distance < width) {
+      return [left + distance, top] as Position;
+    }
+
+    distance -= width;
+
+    // Right edge
+    if (distance < height) {
+      return [right, top + distance] as Position;
+    }
+
+    distance -= height;
+
+    // Bottom edge
+    if (distance < width) {
+      return [right - distance, bottom] as Position;
+    }
+
+    distance -= width;
+
+    // Left edge
+    return [left, bottom - distance] as Position;
+  });
+}
+
+/**
+ * Creates two dense rectangular diya borders:
+ * 63 diyas on the outer border and 62 on the inner border.
+ */
+function createDiyaBorderPositions(): Position[] {
+  const outer = createRectangularBorder(63, {
+    left: 3,
+    top: 4,
+    right: 97,
+    bottom: 96,
+  });
+
+  const inner = createRectangularBorder(
+    62,
+    {
+      left: 9,
+      top: 12,
+      right: 91,
+      bottom: 88,
+    },
+    0.5
+  );
+
+  return Array.from(
+    { length: MAX_DIYAS_PER_PHOTO },
+    (_, index) => {
+      const positionIndex = Math.floor(index / 2);
+
+      return index % 2 === 0
+        ? outer[positionIndex]
+        : inner[positionIndex];
+    }
+  );
 }
 
 const PHOTOS: {
@@ -48,74 +133,58 @@ const PHOTOS: {
     name: "Our College Entrance",
     description:
       "The main entrance of Sanatan Dharma College, welcoming everyone to our campus celebration.",
-    positions: [
-      [8, 80], [18, 85], [28, 78], [38, 86],
-      [48, 80], [58, 86], [68, 79], [78, 85],
-      [89, 79], [14, 62], [26, 65], [38, 59],
-      [50, 66], [62, 60], [74, 65], [86, 59],
-      [20, 43], [40, 46], [60, 43], [80, 46],
-      [5, 52], [95, 52], [30, 28], [50, 25], [70, 28],
-    ].map(adjustPosition),
+    positions: createDiyaBorderPositions(),
   },
   {
     src: campus2,
     name: "Our College Garden",
     description:
       "A peaceful green space on campus, glowing with the warmth of Diwali.",
-    positions: [
-      [8, 82], [18, 85], [28, 80], [38, 86],
-      [48, 81], [58, 86], [68, 80], [78, 85],
-      [89, 81], [13, 63], [25, 65], [37, 61],
-      [63, 61], [75, 65], [87, 63], [20, 43],
-      [35, 46], [65, 46], [80, 43], [50, 72],
-      [5, 52], [95, 52], [30, 28], [50, 25], [70, 28],
-    ].map(adjustPosition),
+    positions: createDiyaBorderPositions(),
   },
   {
     src: campus3,
     name: "Our College Ground",
     description:
       "The college ground where students come together, celebrate and create memories.",
-    positions: [
-      [7, 83], [17, 86], [27, 81], [37, 86],
-      [47, 82], [57, 86], [67, 81], [77, 86],
-      [89, 82], [12, 65], [24, 68], [36, 63],
-      [48, 67], [60, 63], [72, 67], [86, 63],
-      [20, 45], [40, 48], [60, 45], [80, 48],
-      [5, 52], [95, 52], [30, 28], [50, 25], [70, 28],
-    ].map(adjustPosition),
+    positions: createDiyaBorderPositions(),
   },
   {
     src: campus4,
     name: "Our College Building",
     description:
       "The architectural structure of our college, illuminated by the spirit of togetherness.",
-    positions: [
-      [8, 82], [18, 86], [28, 82], [38, 86],
-      [48, 82], [58, 86], [68, 82], [78, 86],
-      [90, 82], [12, 64], [24, 67], [36, 63],
-      [48, 67], [60, 63], [74, 67], [87, 63],
-      [20, 44], [40, 47], [60, 44], [80, 47],
-      [5, 52], [95, 52], [30, 28], [50, 25], [70, 28],
-    ].map(adjustPosition),
+    positions: createDiyaBorderPositions(),
   },
 ];
 
 /**
- * Every group of 5 contributions goes to the next photo.
- * Each photo can display a maximum of 25 diyas.
+ * Distributes contributions in batches of five:
+ *
+ * 1–5     Entrance
+ * 6–10    Garden
+ * 11–15   Ground
+ * 16–20   Building
+ * 21–25   Entrance again
+ *
+ * Each photo stops at 125 diyas.
+ * Total capacity = 500 diyas.
  */
 export function getPhotoDiyaCounts(totalDiyas: number): number[] {
   const total = Math.max(0, Math.floor(totalDiyas));
 
-  const completedBatches = Math.floor(total / DIYAS_PER_BATCH);
+  const completedBatches = Math.floor(
+    total / DIYAS_PER_BATCH
+  );
+
   const currentBatch = total % DIYAS_PER_BATCH;
 
   const completeCycles = Math.floor(
     completedBatches / TOTAL_PHOTOS
   );
 
-  const remainingBatches = completedBatches % TOTAL_PHOTOS;
+  const remainingBatches =
+    completedBatches % TOTAL_PHOTOS;
 
   return PHOTOS.map((_, photoIndex) => {
     const completedPhotoBatches =
@@ -123,7 +192,9 @@ export function getPhotoDiyaCounts(totalDiyas: number): number[] {
       (photoIndex < remainingBatches ? 1 : 0);
 
     const currentPhotoBatch =
-      photoIndex === remainingBatches ? currentBatch : 0;
+      photoIndex === remainingBatches
+        ? currentBatch
+        : 0;
 
     const count =
       completedPhotoBatches * DIYAS_PER_BATCH +
@@ -133,6 +204,11 @@ export function getPhotoDiyaCounts(totalDiyas: number): number[] {
   });
 }
 
+/**
+ * Individual interactive diya.
+ * Hold for 300ms and drag to reposition.
+ * Click to trigger a sparkle.
+ */
 function Diya({
   delay,
   sparkling,
@@ -142,16 +218,23 @@ function Diya({
 }: {
   delay: number;
   sparkling: boolean;
-  onClick: () => void;
-  onMove: (x: number, y: number) => void;
+  onClick?: () => void;
+  onMove?: (x: number, y: number) => void;
   interactive?: boolean;
 }) {
   const [dragging, setDragging] = useState(false);
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
   const pointerRef = useRef<number | null>(null);
   const movedRef = useRef(false);
-  const startRef = useRef({ x: 0, y: 0 });
+
+  const startRef = useRef({
+    x: 0,
+    y: 0,
+  });
 
   function clearLongPress() {
     if (timerRef.current !== null) {
@@ -160,10 +243,15 @@ function Diya({
     }
   }
 
-  function handlePointerDown(event: PointerEvent<HTMLButtonElement>) {
+  function handlePointerDown(
+    event: PointerEvent<HTMLButtonElement>
+  ) {
     if (!interactive) return;
 
-    if (event.button !== 0 && event.pointerType === "mouse") {
+    if (
+      event.button !== 0 &&
+      event.pointerType === "mouse"
+    ) {
       return;
     }
 
@@ -193,7 +281,9 @@ function Diya({
     }, 300);
   }
 
-  function handlePointerMove(event: PointerEvent<HTMLButtonElement>) {
+  function handlePointerMove(
+    event: PointerEvent<HTMLButtonElement>
+  ) {
     if (!interactive) return;
     if (pointerRef.current !== event.pointerId) return;
     if (!dragging) return;
@@ -215,18 +305,26 @@ function Diya({
 
     const x = Math.max(
       2,
-      Math.min(98, ((event.clientX - rect.left) / rect.width) * 100)
+      Math.min(
+        98,
+        ((event.clientX - rect.left) / rect.width) * 100
+      )
     );
 
     const y = Math.max(
       5,
-      Math.min(95, ((event.clientY - rect.top) / rect.height) * 100)
+      Math.min(
+        95,
+        ((event.clientY - rect.top) / rect.height) * 100
+      )
     );
 
-    onMove(x, y);
+    onMove?.(x, y);
   }
 
-  function handlePointerUp(event: PointerEvent<HTMLButtonElement>) {
+  function handlePointerUp(
+    event: PointerEvent<HTMLButtonElement>
+  ) {
     clearLongPress();
 
     if (pointerRef.current === event.pointerId) {
@@ -244,56 +342,26 @@ function Diya({
       return;
     }
 
-    onClick();
+    onClick?.();
   }
 
   useEffect(() => {
     return () => clearLongPress();
   }, []);
 
-  return (
-    <button
-      type="button"
-      disabled={!interactive}
-      aria-label={
-        interactive
-          ? "Hold and drag this diya, or click to sparkle"
-          : "Lit diya"
-      }
-      title={
-        interactive
-          ? "Hold to move • Click to sparkle"
-          : "Lit diya"
-      }
-      onPointerDown={interactive ? handlePointerDown : undefined}
-      onPointerMove={interactive ? handlePointerMove : undefined}
-      onPointerUp={interactive ? handlePointerUp : undefined}
-      onPointerCancel={interactive ? handlePointerUp : undefined}
-      onClick={interactive ? handleClick : undefined}
-      className={`relative border-0 bg-transparent p-0 ${
-        dragging ? "scale-125" : "hover:scale-110"
-      }`}
-      style={{
-        width: 28,
-        height: 24,
-        cursor: interactive
-          ? dragging
-            ? "grabbing"
-            : "grab"
-          : "default",
-        touchAction: interactive ? "none" : "auto",
-        transition: "transform 150ms ease",
-        WebkitTapHighlightColor: "transparent",
-      }}
-    >
+  const content = (
+    <>
+      {/* Diya base */}
       <span
         className="absolute bottom-1 left-1/2 h-2 w-5 -translate-x-1/2 rounded-full"
         style={{
-          background: "linear-gradient(180deg,#ffb347,#9b3519)",
+          background:
+            "linear-gradient(180deg,#ffb347,#9b3519)",
           boxShadow: "0 2px 5px #0008",
         }}
       />
 
+      {/* Flame */}
       <span
         className={`scene-flame absolute bottom-3 left-1/2 ${
           sparkling ? "scene-flame-active" : ""
@@ -304,11 +372,13 @@ function Diya({
           transform: "translateX(-50%)",
           animationDelay: `${delay}s`,
           borderRadius: "50% 50% 45% 45%",
-          background: "linear-gradient(to top,#ff7b22,#ffd56b)",
+          background:
+            "linear-gradient(to top,#ff7b22,#ffd56b)",
           boxShadow: "0 0 8px #ffae42",
         }}
       />
 
+      {/* Glow */}
       <span
         className={`scene-glow absolute -left-1 -top-2 h-10 w-10 ${
           sparkling ? "scene-glow-active" : ""
@@ -322,6 +392,7 @@ function Diya({
         }}
       />
 
+      {/* Sparkle burst */}
       {sparkling && (
         <span className="scene-spark-burst absolute left-1/2 top-1/2 z-30">
           {Array.from({ length: 20 }).map((_, i) => (
@@ -338,12 +409,56 @@ function Diya({
           ))}
         </span>
       )}
+    </>
+  );
+
+  const sharedStyle = {
+    width: 28,
+    height: 24,
+    transition: "transform 150ms ease",
+    WebkitTapHighlightColor: "transparent" as const,
+  };
+
+  if (!interactive) {
+    return (
+      <div
+        aria-hidden="true"
+        className="relative border-0 bg-transparent p-0"
+        style={sharedStyle}
+      >
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      aria-label="Hold and drag this diya, or click to sparkle"
+      title="Hold to move • Click to sparkle"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onClick={handleClick}
+      className={`relative border-0 bg-transparent p-0 ${
+        dragging ? "scale-125" : "hover:scale-110"
+      }`}
+      style={{
+        ...sharedStyle,
+        cursor: dragging ? "grabbing" : "grab",
+        touchAction: "none",
+      }}
+    >
+      {content}
     </button>
   );
 }
 
 /**
- * Read-only campus photo used by the Gallery.
+ * Read-only photo component used by the Gallery page.
+ * It uses the same diya distribution and border positions
+ * as the homepage.
  */
 export function CampusGalleryPhoto({
   photoIndex,
@@ -352,133 +467,153 @@ export function CampusGalleryPhoto({
   level,
   className = "",
   fit = "cover",
-}: {
-  photoIndex: number;
-  diyas: number;
-  warmth: number;
-  level: number;
-  className?: string;
-  fit?: "cover" | "contain";
-}) {
-  const [sparklingDiya, setSparklingDiya] = useState<number | null>(null);
+}: GalleryPhotoProps) {
+  const [sparklingDiya, setSparklingDiya] = useState<
+    number | null
+  >(null);
 
-  const safePhotoIndex = Math.max(
-    0,
-    Math.min(PHOTOS.length - 1, photoIndex)
+  const photo = PHOTOS[photoIndex] ?? PHOTOS[0];
+
+  const photoDiyaCounts = getPhotoDiyaCounts(diyas);
+
+  const visibleDiyas = photoDiyaCounts[photoIndex] ?? 0;
+
+  const safeLevel = Math.min(
+    Math.max(0, level),
+    LEVEL_NAMES.length - 1
   );
 
-  const photo = PHOTOS[safePhotoIndex];
-  const photoCounts = getPhotoDiyaCounts(diyas);
-  const visibleDiyas = photoCounts[safePhotoIndex] ?? 0;
-
+  // Automatically sparkle a random visible diya.
   useEffect(() => {
     if (visibleDiyas === 0) {
       setSparklingDiya(null);
       return;
     }
 
-    const interval = window.setInterval(() => {
-      setSparklingDiya(
-        Math.floor(Math.random() * visibleDiyas)
+    const timer = window.setInterval(() => {
+      const randomIndex = Math.floor(
+        Math.random() * visibleDiyas
       );
+
+      setSparklingDiya(randomIndex);
     }, 3500);
 
-    return () => window.clearInterval(interval);
-  }, [visibleDiyas, safePhotoIndex]);
+    return () => window.clearInterval(timer);
+  }, [visibleDiyas, photoIndex]);
 
+  // End the sparkle animation.
   useEffect(() => {
     if (sparklingDiya === null) return;
 
-    const timeout = window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       setSparklingDiya(null);
     }, 1800);
 
-    return () => window.clearTimeout(timeout);
+    return () => window.clearTimeout(timer);
   }, [sparklingDiya]);
 
   return (
     <div
-      className={`relative isolate overflow-hidden bg-black ${className}`}
+      className={`relative isolate overflow-hidden rounded-2xl border border-primary/20 bg-black ${className}`}
     >
+      {/* Campus photograph */}
       <img
         src={photo.src}
         alt={photo.name}
-        className={`absolute inset-0 h-full w-full ${
-          fit === "contain" ? "object-contain" : "object-cover"
-        }`}
+        className="absolute inset-0 h-full w-full"
         style={{
+          objectFit: fit,
           filter: `brightness(${0.68 + warmth * 0.3})`,
         }}
       />
 
+      {/* Twilight overlay */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
             "linear-gradient(180deg, transparent 35%, #170b20aa 100%)",
-          opacity: 0.65,
         }}
       />
 
+      {/* Warm illumination */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
             "radial-gradient(ellipse at 50% 75%, #ffae343d, transparent 70%)",
-          opacity: 0.25 + Math.min(1, visibleDiyas / 25) * 0.75,
+          opacity: 0.25 + Math.min(1, warmth) * 0.75,
         }}
       />
 
-      {photo.positions.slice(0, visibleDiyas).map((position, index) => {
-        const [x, y] = position;
+      {/* Two-line diya border */}
+      {photo.positions.slice(0, visibleDiyas).map(
+        (position, index) => {
+          const [x, y] = position;
 
-        return (
-          <div
-            key={`${safePhotoIndex}-${index}`}
-            className="absolute z-10"
-            style={{
-              left: `${x}%`,
-              top: `${y}%`,
-              transform: "translate(-50%, -50%)",
-            }}
-          >
-            <Diya
-              delay={(index % 5) * 0.25}
-              sparkling={sparklingDiya === index}
-              onClick={() => setSparklingDiya(index)}
-              onMove={() => undefined}
-              interactive={false}
-            />
-          </div>
-        );
-      })}
-
-      {level >= 2 &&
-        Array.from({ length: Math.min(level * 3, 15) }).map(
-          (_, index) => (
-            <span
-              key={`star-${index}`}
-              className="scene-star absolute z-10"
+          return (
+            <div
+              key={`${photoIndex}-${index}`}
+              className="absolute z-10"
               style={{
-                left: `${8 + ((index * 37) % 84)}%`,
-                top: `${10 + ((index * 23) % 65)}%`,
-                width: 4,
-                height: 4,
-                background: "#ffe5a0",
-                boxShadow: "0 0 12px #ffc45c",
-                animationDelay: `${index * 0.3}s`,
+                left: `${x}%`,
+                top: `${y}%`,
+                transform: "translate(-50%, -50%)",
+                zIndex:
+                  sparklingDiya === index ? 30 : 10,
               }}
-            />
-          )
-        )}
+            >
+              <Diya
+                delay={(index % 5) * 0.25}
+                sparkling={sparklingDiya === index}
+                interactive={false}
+              />
+            </div>
+          );
+        }
+      )}
 
-      <div className="absolute bottom-3 right-3 z-20 rounded-full border border-amber-200/30 bg-black/60 px-3 py-1 text-xs font-semibold text-amber-200">
-        {visibleDiyas} / 25 diyas
+      {/* Level stars */}
+      {level >= 2 &&
+        Array.from({
+          length: Math.min(level * 3, 15),
+        }).map((_, index) => (
+          <span
+            key={`star-${index}`}
+            className="scene-star absolute z-10"
+            style={{
+              left: `${8 + ((index * 37) % 84)}%`,
+              top: `${10 + ((index * 23) % 65)}%`,
+              width: 4,
+              height: 4,
+              background: "#ffe5a0",
+              boxShadow: "0 0 12px #ffc45c",
+              animationDelay: `${index * 0.3}s`,
+            }}
+          />
+        ))}
+
+      {/* Photo information */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-4 pb-4 pt-12">
+        <p className="font-display text-sm font-semibold text-amber-100">
+          {LEVEL_NAMES[safeLevel]}
+        </p>
+
+        <p className="mt-1 text-xs text-white/75">
+          {photo.name}
+        </p>
+
+        <p className="mt-1 text-xs text-amber-200/90">
+          {visibleDiyas} / {MAX_DIYAS_PER_PHOTO} diyas
+        </p>
       </div>
     </div>
   );
 }
 
+/**
+ * Main homepage campus scene.
+ */
 export function CampusScene({
   warmth,
   level,
@@ -487,27 +622,29 @@ export function CampusScene({
   className = "",
 }: SceneProps) {
   const [activePhoto, setActivePhoto] = useState(0);
-  const [sparklingDiya, setSparklingDiya] = useState<string | null>(null);
+
+  const [sparklingDiya, setSparklingDiya] = useState<
+    string | null
+  >(null);
 
   const [photoPositions, setPhotoPositions] = useState<
     Record<number, Record<number, Position>>
   >({});
 
-  const totalDiyas = Math.max(0, Math.floor(diyas));
-  const photoDiyaCounts = getPhotoDiyaCounts(totalDiyas);
-
-  const photo = PHOTOS[activePhoto] ?? PHOTOS[0];
-  const visibleDiyas = photoDiyaCounts[activePhoto] ?? 0;
-
+  // Rotate through all four campus photographs.
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setActivePhoto((current) => (current + 1) % PHOTOS.length);
+      setActivePhoto(
+        (current) => (current + 1) % PHOTOS.length
+      );
+
       setSparklingDiya(null);
     }, 7000);
 
     return () => window.clearInterval(timer);
   }, []);
 
+  // End each sparkle animation.
   useEffect(() => {
     if (!sparklingDiya) return;
 
@@ -518,11 +655,24 @@ export function CampusScene({
     return () => window.clearTimeout(timer);
   }, [sparklingDiya]);
 
+  const photo = PHOTOS[activePhoto] ?? PHOTOS[0];
+
+  const totalDiyas = Math.max(0, Math.floor(diyas));
+
+  // Shared contribution distribution.
+  const photoDiyaCounts = getPhotoDiyaCounts(totalDiyas);
+
+  const visibleDiyas = photoDiyaCounts[activePhoto] ?? 0;
+
+  // Automatically sparkle a random visible diya every 3.5 seconds.
   useEffect(() => {
     if (visibleDiyas === 0) return;
 
     const timer = window.setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * visibleDiyas);
+      const randomIndex = Math.floor(
+        Math.random() * visibleDiyas
+      );
+
       setSparklingDiya(`${activePhoto}-${randomIndex}`);
     }, 3500);
 
@@ -544,6 +694,7 @@ export function CampusScene({
       className={`relative isolate overflow-hidden rounded-3xl border border-primary/30 bg-black shadow-2xl ${className}`}
       data-testid="campus-scene"
     >
+      {/* All four campus photographs */}
       {PHOTOS.map((item, index) => (
         <img
           key={item.name}
@@ -557,6 +708,7 @@ export function CampusScene({
         />
       ))}
 
+      {/* Twilight overlay */}
       <div
         className="absolute inset-0"
         style={{
@@ -566,6 +718,7 @@ export function CampusScene({
         }}
       />
 
+      {/* Warm illumination */}
       <div
         className="pointer-events-none absolute inset-0 transition-opacity duration-1000"
         style={{
@@ -575,59 +728,66 @@ export function CampusScene({
         }}
       />
 
-      {photo.positions.slice(0, visibleDiyas).map((position, index) => {
-        const id = `${activePhoto}-${index}`;
-        const [x, y] =
-          photoPositions[activePhoto]?.[index] ?? position;
+      {/* Visible diyas on the active photograph */}
+      {photo.positions.slice(0, visibleDiyas).map(
+        (position, index) => {
+          const id = `${activePhoto}-${index}`;
 
-        return (
-          <div
-            key={id}
-            className="absolute z-10"
-            style={{
-              left: `${x}%`,
-              top: `${y}%`,
-              transform: "translate(-50%, -50%)",
-              zIndex: sparklingDiya === id ? 30 : 10,
-            }}
-          >
-            <Diya
-              delay={(index % 5) * 0.25}
-              sparkling={sparklingDiya === id}
-              onClick={() => setSparklingDiya(id)}
-              onMove={(newX, newY) => {
-                setPhotoPositions((current) => ({
-                  ...current,
-                  [activePhoto]: {
-                    ...current[activePhoto],
-                    [index]: [newX, newY],
-                  },
-                }));
-              }}
-            />
-          </div>
-        );
-      })}
+          const [x, y] =
+            photoPositions[activePhoto]?.[index] ??
+            position;
 
-      {level >= 2 &&
-        Array.from({ length: Math.min(level * 3, 15) }).map(
-          (_, index) => (
-            <span
-              key={`star-${index}`}
-              className="scene-star absolute z-10"
+          return (
+            <div
+              key={id}
+              className="absolute z-10"
               style={{
-                left: `${8 + ((index * 37) % 84)}%`,
-                top: `${10 + ((index * 23) % 65)}%`,
-                width: 4,
-                height: 4,
-                background: "#ffe5a0",
-                boxShadow: "0 0 12px #ffc45c",
-                animationDelay: `${index * 0.3}s`,
+                left: `${x}%`,
+                top: `${y}%`,
+                transform: "translate(-50%, -50%)",
+                zIndex: sparklingDiya === id ? 30 : 10,
               }}
-            />
-          )
-        )}
+            >
+              <Diya
+                delay={(index % 5) * 0.25}
+                sparkling={sparklingDiya === id}
+                onClick={() => setSparklingDiya(id)}
+                onMove={(newX, newY) => {
+                  setPhotoPositions((current) => ({
+                    ...current,
+                    [activePhoto]: {
+                      ...current[activePhoto],
+                      [index]: [newX, newY],
+                    },
+                  }));
+                }}
+              />
+            </div>
+          );
+        }
+      )}
 
+      {/* Floating stars at higher illumination levels */}
+      {level >= 2 &&
+        Array.from({
+          length: Math.min(level * 3, 15),
+        }).map((_, index) => (
+          <span
+            key={`star-${index}`}
+            className="scene-star absolute z-10"
+            style={{
+              left: `${8 + ((index * 37) % 84)}%`,
+              top: `${10 + ((index * 23) % 65)}%`,
+              width: 4,
+              height: 4,
+              background: "#ffe5a0",
+              boxShadow: "0 0 12px #ffc45c",
+              animationDelay: `${index * 0.3}s`,
+            }}
+          />
+        ))}
+
+      {/* Fireworks at the highest levels */}
       {level >= 5 && (
         <div className="pointer-events-none absolute inset-0 z-10">
           {Array.from({ length: 8 }).map((_, index) => (
@@ -648,18 +808,19 @@ export function CampusScene({
         </div>
       )}
 
+      {/* Bottom information panel */}
       <div className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-between gap-3 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-4 pb-5 pt-16">
         <div className="min-w-0">
           <p className="font-display text-sm font-semibold text-amber-100 sm:text-lg">
-            {photo.name}
+            {LEVEL_NAMES[safeLevel]}
           </p>
 
           <p className="mt-1 text-xs text-white/75 sm:text-sm">
-            {photo.description}
+            {LEVEL_DESCRIPTIONS[safeLevel]}
           </p>
 
           <p className="mt-1 text-xs text-amber-200/80">
-            {LEVEL_NAMES[safeLevel]} · {LEVEL_DESCRIPTIONS[safeLevel]}
+            {photo.name}
           </p>
 
           <p className="mt-1 text-xs text-white/65">
@@ -678,6 +839,7 @@ export function CampusScene({
         </div>
       </div>
 
+      {/* Photo selector */}
       <div className="absolute right-4 top-4 z-20 flex gap-2">
         {PHOTOS.map((item, index) => (
           <button
@@ -700,3 +862,4 @@ export function CampusScene({
     </div>
   );
 }
+

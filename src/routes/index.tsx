@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+
 import { CampusScene } from "@/components/campus-scene";
 import { useCampusStats } from "@/hooks/use-campus";
 import { computeIllumination } from "@/lib/illumination";
 import { Button } from "@/components/ui/button";
+
 import {
   Flame,
   Sparkles,
@@ -10,6 +12,7 @@ import {
   Image as ImageIcon,
   Heart,
 } from "lucide-react";
+
 import { timeAgo } from "@/lib/format";
 
 export const Route = createFileRoute("/")({
@@ -57,8 +60,10 @@ function StatTile({
 function Index() {
   const stats = useCampusStats();
   const data = stats.data;
+
   const diyas = data?.total_diyas ?? 0;
-  const milestone = data?.milestone ?? 100;
+  const milestone = data?.milestone ?? 500;
+
   const illumination = computeIllumination(diyas, milestone);
 
   return (
@@ -67,16 +72,17 @@ function Index() {
       <section className="grid items-center gap-8 py-10 lg:grid-cols-2 lg:py-14">
         <div className="animate-rise">
           <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-champagne">
-            <Sparkles className="h-3.5 w-3.5" /> Diwali 2026 · SD CodeCraft
-            Club
+            <Sparkles className="h-3.5 w-3.5" />
+            Diwali 2026 · SD CodeCraft Club
           </p>
 
           <h1 className="font-display text-4xl font-bold leading-tight text-foreground sm:text-5xl">
-            This Diwali, Let's Light Up SD College Together!,{" "}
-            <span className="text-glow-gold text-primary">
-              One Right Answer = One Glowing Diya in our campus !
-            </span>
+            This Diwali, Let's Light Up SD College Together!
           </h1>
+
+          <p className="mt-3 text-lg font-semibold text-primary sm:text-xl">
+            One Right Answer = One Glowing Diya in our campus!
+          </p>
 
           <p className="mt-4 max-w-lg text-base text-muted-foreground sm:text-lg">
             Our campus begins in soft twilight. Every correct answer in the
@@ -87,13 +93,15 @@ function Index() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild size="lg" className="gap-2">
               <Link to="/quiz">
-                <Flame className="h-5 w-5" /> Play &amp; light a diya
+                <Flame className="h-5 w-5" />
+                Play &amp; light a diya
               </Link>
             </Button>
 
             <Button asChild size="lg" variant="outline" className="gap-2">
               <Link to="/campus">
-                <Sparkles className="h-5 w-5" /> View the campus
+                <Sparkles className="h-5 w-5" />
+                View the campus
               </Link>
             </Button>
           </div>
@@ -150,11 +158,11 @@ function Index() {
         <div className="px-4 py-6 sm:px-8 sm:py-8">
           <div className="overflow-hidden rounded-xl border border-primary/20 bg-background/50">
             <img
-  src="/images/sd-codecraft-group.jpg"
-  alt="SD CodeCraft Club team"
-  className="max-h-600px w-full object-cover"
-  loading="lazy"
-/>
+              src="/images/sd-codecraft-group.jpg"
+              alt="SD CodeCraft Club team"
+              className="max-h-[600px] w-full object-cover"
+              loading="lazy"
+            />
           </div>
 
           <p className="mt-3 text-center text-xs text-muted-foreground">
@@ -183,7 +191,8 @@ function Index() {
 
           <Button asChild variant="ghost" size="sm" className="gap-2">
             <Link to="/leaderboard">
-              <Trophy className="h-4 w-4" /> Leaderboard
+              <Trophy className="h-4 w-4" />
+              Leaderboard
             </Link>
           </Button>
         </div>
@@ -233,7 +242,7 @@ function Index() {
           {
             icon: Heart,
             title: "3 · Glow together",
-            text: "Watch the whole college warm up live as everyone's diyas add up to 100.",
+            text: "Watch the whole college warm up live as everyone's contributions bring us closer to 500 glowing diyas.",
           },
         ].map((step) => (
           <div
@@ -255,29 +264,33 @@ function Index() {
       <section className="mt-10 flex flex-wrap justify-center gap-3">
         <Button asChild variant="secondary" className="gap-2">
           <Link to="/gallery">
-            <ImageIcon className="h-4 w-4" /> Festival gallery
+            <ImageIcon className="h-4 w-4" />
+            Festival gallery
           </Link>
         </Button>
 
         <Button asChild variant="secondary" className="gap-2">
           <Link to="/wish">
-            <Heart className="h-4 w-4" /> Make a wish card
+            <Heart className="h-4 w-4" />
+            Make a wish card
           </Link>
         </Button>
 
         <Button asChild variant="secondary" className="gap-2">
           <Link to="/mission">
-            <Sparkles className="h-4 w-4" /> Our mission
+            <Sparkles className="h-4 w-4" />
+            Our mission
           </Link>
         </Button>
       </section>
-            {/* Bottom Diwali GIF */}
+
+      {/* Bottom Diwali GIF */}
       <section className="mt-12 mb-6">
         <div className="overflow-hidden rounded-2xl border border-primary/20 bg-card/50">
           <img
             src="/images/sdc.gif"
             alt="Happy Diwali celebration"
-            className="block w-full h-auto"
+            className="block h-auto w-full"
             loading="lazy"
           />
         </div>

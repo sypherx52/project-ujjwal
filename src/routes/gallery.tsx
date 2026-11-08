@@ -1,10 +1,10 @@
-
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 
 import {
   CampusGalleryPhoto,
   getPhotoDiyaCounts,
+  MAX_DIYAS_PER_PHOTO,
 } from "@/components/campus-scene";
 
 import { useCampusStats } from "@/hooks/use-campus";
@@ -70,11 +70,10 @@ function GalleryPage() {
   const data = stats.data;
 
   const diyas = data?.total_diyas ?? 0;
-  const milestone = data?.milestone ?? 100;
+  const milestone = data?.milestone ?? 500;
 
   const illumination = computeIllumination(diyas, milestone);
 
-  // Uses the same distribution function as the homepage.
   const photoDiyaCounts = getPhotoDiyaCounts(diyas);
 
   return (
@@ -106,7 +105,7 @@ function GalleryPage() {
 
         <p className="mt-3 text-xs text-muted-foreground">
           Every 5 contributions light the next campus photo. Each photo can
-          hold up to 25 diyas.
+          hold up to {MAX_DIYAS_PER_PHOTO} diyas.
         </p>
       </div>
 
@@ -135,7 +134,7 @@ function GalleryPage() {
                 </h2>
 
                 <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                  {photoDiyaCounts[index]} / 25
+                  {photoDiyaCounts[index]} / {MAX_DIYAS_PER_PHOTO}
                 </span>
               </div>
 
@@ -171,7 +170,7 @@ function GalleryPage() {
                   </DialogTitle>
 
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    {photoDiyaCounts[openIndex]} / 25 diyas
+                    {photoDiyaCounts[openIndex]} / {MAX_DIYAS_PER_PHOTO} diyas
                   </span>
                 </div>
 
